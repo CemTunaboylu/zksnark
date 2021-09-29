@@ -52,6 +52,7 @@ def mk_singleton(point_loc, height, total_pts):
 # Assumes vec[0] = p(1), vec[1] = p(2), etc, tries to find p,
 # expresses result as [deg 0 coeff, deg 1 coeff...]
 def lagrange_interp(vec):
+    print("lagrange input : ", vec)
     o = []
     for i in range(len(vec)):
         o = add_polys(o, mk_singleton(i + 1, vec[i], len(vec)))
@@ -78,6 +79,7 @@ def r1cs_to_qap(A, B, C):
 def create_solution_polynomials(r, new_A, new_B, new_C):
     Apoly = []
     for rval, a in zip(r, new_A):
+        print(f"rval {rval}, a {a}")
         Apoly = add_polys(Apoly, multiply_polys([rval], a))
     Bpoly = []
     for rval, b in zip(r, new_B):
@@ -120,7 +122,7 @@ def test():
     for x in Cp: print(x)
     print('Z')
     print(Z)
-    Apoly, Bpoly, Cpoly, sol = create_solution_polynomials(r, Ap, Bp, Cp)
+/    Apoly, Bpoly, Cpoly, sol = create_solution_polynomials(r, Ap, Bp, Cp)
     print('Apoly')
     print(Apoly)
     print('Bpoly')
@@ -181,6 +183,9 @@ def lagrange():
     o = singleton(1, 2, 3)
     print("the result : ", o)
 
-lagrange()
+test()
 
+# import pprint
+# pprint.pprint(A)
+# pprint.pprint(transpose(A))
 
