@@ -73,6 +73,7 @@ def r1cs_to_qap(A, B, C):
     new_C = [lagrange_interp(c) for c in C]
     Z = [1]
     for i in range(1, len(A[0]) + 1):
+        print(f"r1cs Z iterations : {i}")
         Z = multiply_polys(Z, [-i, 1])
     return (new_A, new_B, new_C, Z)
 
@@ -96,7 +97,7 @@ def create_divisor_polynomial(sol, Z):
     quot, rem = div_polys(sol, Z)
     for x in rem:
         assert abs(x) < 10**-10
-    return quot
+    return quot, rem
 
 r = [1, 3, 35, 9, 27, 30]
 A = [[0, 1, 0, 0, 0, 0],
@@ -122,7 +123,7 @@ def test():
     for x in Cp: print(x)
     print('Z')
     print(Z)
-/    Apoly, Bpoly, Cpoly, sol = create_solution_polynomials(r, Ap, Bp, Cp)
+    Apoly, Bpoly, Cpoly, sol = create_solution_polynomials(r, Ap, Bp, Cp)
     print('Apoly')
     print(Apoly)
     print('Bpoly')
@@ -184,8 +185,3 @@ def lagrange():
     print("the result : ", o)
 
 test()
-
-# import pprint
-# pprint.pprint(A)
-# pprint.pprint(transpose(A))
-

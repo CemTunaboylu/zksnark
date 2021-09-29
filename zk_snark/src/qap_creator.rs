@@ -80,10 +80,10 @@ pub mod qap {
     pub fn lagrange(vec : &Vec<f64>) -> Vec<f64> {
         let mut out : Vec<f64> = vec![];
         let l : usize = vec.len();
-        let mut inter_eval : f64;
+        // let mut inter_eval : f64;
         for i in 1..=l{
             out = add_poly(&out, &(mk_singleton(i, vec[i-1] as isize, l)), true);
-            inter_eval = eval_poly(vec, i as isize);
+            // inter_eval = eval_poly(vec, i as isize);
             // assert!( inter_eval - vec[i-1] < (10 as f64).powi(-10),"{:?}", (vec, inter_eval, i) )
         }
         out
@@ -117,43 +117,54 @@ pub mod qap {
             .collect()
     }
 
-    pub fn r1cs_to_qap(a : &Vec<Vec<f64>>, b : &Vec<Vec<f64>>, c : &Vec<Vec<f64>>) -> (Vec<Vec<f64>>, Vec<Vec<f64>>, Vec<Vec<f64>>){
+    pub fn r1cs_to_qap(a : &Vec<Vec<f64>>, b : &Vec<Vec<f64>>, c : &Vec<Vec<f64>>) -> (Vec<Vec<f64>>, Vec<Vec<f64>>, Vec<Vec<f64>>, Vec<f64>){
         let a_transpose = transpose(a.to_vec());
         let b_transpose = transpose(b.to_vec());
         let c_transpose = transpose(c.to_vec());
+        let a_t = &a_transpose;
 
-        let lagrange_a : Vec<Vec<f64>> = a_transpose.into_iter().map(|row| lagrange(&row)).collect();
-        let lagrange_b : Vec<Vec<f64>> = b_transpose.into_iter().map(|row| lagrange(&row)).collect();
-        let lagrange_c : Vec<Vec<f64>> = c_transpose.into_iter().map(|row| lagrange(&row)).collect();
+        let lagrange_a : Vec<Vec<f64>> = a_transpose.iter().map(|row| lagrange(&row)).collect();
+        let lagrange_b : Vec<Vec<f64>> = b_transpose.iter().map(|row| lagrange(&row)).collect();
+        let lagrange_c : Vec<Vec<f64>> = c_transpose.iter().map(|row| lagrange(&row)).collect();
 
-        (lagrange_a, lagrange_b, lagrange_c)
+        let mut Z : Vec<f64> = vec![1.0];
+        let col = a_t[0].len();
+        for i in 1..=col {
+            Z = mult_poly(&Z, &vec![i as f64 * (-1.0), 1.0]);
+        }
+        (lagrange_a, lagrange_b, lagrange_c, Z)
 
     }
 
-    pub fn solution_poly(answer : Vec<f64>, r1cs_a: Vec<Vec<f64>>, r1cs_b: Vec<Vec<f64>>, r1cs_c: Vec<Vec<f64>>) /* -> (Vec<Vec<T>>, Vec<Vec<T>>, Vec<Vec<T>>, Vec<T>) */
-    // where T: std::fmt::Debug
-    {
+    pub fn solution_poly(answer : Vec<f64>, qap_a: Vec<Vec<f64>>, qap_b: Vec<Vec<f64>>, qap_c: Vec<Vec<f64>>) -> (Vec<f64>, Vec<f64>, Vec<f64>, Vec<f64>){
         let mut a_poly : Vec<f64> = vec![];
         let mut b_poly : Vec<f64> = vec![];
         let mut c_poly : Vec<f64> = vec![];
 
-        let a_iter = r1cs_a.into_iter();
-        let b_iter = r1cs_b.into_iter();
-        let c_iter = r1cs_c.into_iter();
+        let mut a_iter = qap_a.into_iter();
+        let mut b_iter = qap_b.into_iter();
+        let mut c_iter = qap_c.into_iter();
 
 
         // |a| = |b| = |c| -> we can merge them in one loop
-        for ans_elm in answer.iter(){
-            let inter = vec![ans_elm];
-            a_poly = add_poly(&a_poly, &mult_poly(&inter, &a_iter.next().unwrap()), true);
-            b_poly = add_poly(&b_poly, &mult_poly(&inter, &b_iter.next().unwrap()), true);
-            c_poly = add_poly(&c_poly, &mult_poly(&inter, &c_iter.next().unwrap()), true);
+        for ans_elm in answer.into_iter(){
+            a_poly = add_poly(&a_poly, &mult_poly( &vec![ans_elm], &a_iter.next().unwrap()), true);
+            b_poly = add_poly(&b_poly, &mult_poly(&vec![ans_elm], &b_iter.next().unwrap()), true);
+            c_poly = add_poly(&c_poly, &mult_poly(&vec![ans_elm], &c_iter.next().unwrap()), true);
         }
-            // println!("{}: ({:?}, {:?})", i, ans_elm, a_poly_elm);
-        println!("{:?}", a_poly);
-        println!("{:?}", b_poly);
-        println!("{:?}", c_poly);
 
+        let o = sub_poly(&mult_poly(&a_poly, &b_poly), &c_poly);
+
+        // println!("{:?}", a_poly);
+        // println!("{:?}", b_poly);
+        // println!("{:?}", c_poly);
+        (a_poly, b_poly, c_poly, o)
+
+    }
+
+    pub fn create_divisor_poly(sol : &Vec<f64>, Z : &Vec<f64>) -> (Vec<f64>, Vec<f64>){
+        let (quot, rem) = div_poly(&sol, &Z);
+        (quot, rem)
     }
 
 }
